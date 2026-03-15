@@ -23,16 +23,11 @@ export async function GET(
 
   const logoSize = Math.round(LOGO_SIZE_REF * scale);
   const rightMargin = Math.round(MARGIN_RIGHT_REF * scale);
-  const logoX = contentSize - rightMargin - logoSize;
-  const logoY = Math.round(contentSize * 0.5 - logoSize + OVERLAP_FROM_TOP * (scale));
+  const logoY = Math.round(contentSize * 0.5 - logoSize + OVERLAP_FROM_TOP * scale);
 
   const displayWord = decodeURIComponent(word || "").toUpperCase();
   const words = displayWord.split(/\s+/).filter(Boolean);
   const isStacked = words.length >= 2 && words.length <= 8;
-
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
 
   const singleFontSize = Math.round(contentSize * 0.5);
   const stackedFontSize = Math.round(contentSize * 0.22);
@@ -125,17 +120,6 @@ export async function GET(
           >
             E
           </div>
-          <img
-            src={`${baseUrl}/logo.svg`}
-            alt=""
-            width={logoSize}
-            height={logoSize}
-            style={{
-              position: "absolute",
-              right: rightMargin,
-              top: logoY,
-            }}
-          />
         </div>
       </div>
     ),

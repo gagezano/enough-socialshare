@@ -108,8 +108,8 @@ export default function ShareButtons({ word, imageDataUrl, pageUrl }: ShareButto
       a.download = `enough-${word.toLowerCase().replace(/\s+/g, "-")}-instagram.png`;
       a.click();
       URL.revokeObjectURL(blobUrl);
+      window.open("https://www.instagram.com/", "_blank");
     } catch {
-      // fallback: open share page in new tab
       window.open(addPlatformParam(shareUrl, "instagram"), "_blank");
     }
   };
