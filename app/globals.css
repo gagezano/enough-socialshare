@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-arial-black: "Arial Black", "Arial Bold", Arial, sans-serif;
+}
+
+body {
+  font-family: var(--font-arial-black);
+}
+
+@keyframes placeholderFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes placeholderFadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.placeholder-fade-in {
+  animation: placeholderFadeIn 1.4s ease-in-out;
+}
+
+.placeholder-fade-out {
+  animation: placeholderFadeOut 1.4s ease-in-out forwards;
+}
+
+@keyframes logoFloat {
+  0%,
+  100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  33% {
+    transform: translate(2px, -3px) rotate(1deg);
+  }
+  66% {
+    transform: translate(-1px, -2px) rotate(-0.5deg);
+  }
+}
+
+.logo-float-hover:hover img {
+  animation: logoFloat 2.5s ease-in-out infinite;
+}
