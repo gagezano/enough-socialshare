@@ -20,6 +20,7 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
   const sizeParam = platform || "facebook";
   const { width, height } = getShareImageSize(sizeParam);
   const imageUrl = `${baseUrl}/api/share-image/${encodeURIComponent(decoded)}?size=${encodeURIComponent(sizeParam)}`;
+  const pageUrl = `${baseUrl}/share/${encodeURIComponent(decoded)}${platform ? `?for=${encodeURIComponent(platform)}` : ""}`;
 
   return {
     title: `Enough - ${decoded}`,
@@ -27,12 +28,15 @@ export async function generateMetadata({ params, searchParams }: PageProps): Pro
     openGraph: {
       title: `Enough - ${decoded}`,
       description: shareText,
+      url: pageUrl,
+      type: "website",
       images: [
         {
           url: imageUrl,
           width,
           height,
           type: "image/png",
+          secureUrl: imageUrl,
         },
       ],
     },

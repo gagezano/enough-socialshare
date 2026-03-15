@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
 import "./globals.css";
 
+const baseUrl =
+  process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : process.env.NEXT_PUBLIC_BASE_URL || "https://enough-socialshare.vercel.app";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(baseUrl),
   title: "Enough - Social Share",
   description: "Create and share custom word graphics",
   openGraph: {
