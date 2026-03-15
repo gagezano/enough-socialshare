@@ -52,17 +52,23 @@ export default function VerifyGate({
     [isVerifying, onVerified, onVerificationFailed]
   );
 
-  const needsRateLimitCheck = captchaVerified || !TURNSTILE_SITE_KEY;
+  const skipCaptcha = !TURNSTILE_SITE_KEY;
+  const needsRateLimitCheck = captchaVerified || skipCaptcha;
 
   useEffect(() => {
     if (!word) {
       setGenerationAllowed(false);
       return;
     }
+    if (skipCaptcha) {
+      // No Turnstile: show preview immediately (don't call API so a failure can't hide the preview)
+      setGenerationAllowed(true);
+      return;
+    }
     if (needsRateLimitCheck) {
       verifyWithApi();
     }
-  }, [word, needsRateLimitCheck]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [word, needsRateLimitCheck, skipCaptcha]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleTurnstileSuccess = useCallback(
     (token: string) => {
@@ -72,8 +78,6 @@ export default function VerifyGate({
   );
 
   if (!word) return null;
-
-  const skipCaptcha = !TURNSTILE_SITE_KEY;
 
   if (!skipCaptcha && !captchaVerified) {
     return (

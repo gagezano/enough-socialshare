@@ -4,7 +4,6 @@ import { useRef, useEffect, useCallback } from "react";
 
 const WIDTH = 1080;
 const HEIGHT = 1080;
-const SHARE_SIZE = 270; // 25% of 1080 for smaller share images
 
 interface GraphicPreviewProps {
   word: string;
@@ -130,16 +129,7 @@ export default function GraphicPreview({ word, onImageReady }: GraphicPreviewPro
     ctx.strokeRect(5, 5, WIDTH - 10, HEIGHT - 10);
 
     if (onImageReady) {
-      const shareCanvas = document.createElement("canvas");
-      shareCanvas.width = SHARE_SIZE;
-      shareCanvas.height = SHARE_SIZE;
-      const shareCtx = shareCanvas.getContext("2d");
-      if (shareCtx) {
-        shareCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, SHARE_SIZE, SHARE_SIZE);
-        onImageReady(shareCanvas.toDataURL("image/png"));
-      } else {
-        onImageReady(canvas.toDataURL("image/png"));
-      }
+      onImageReady(canvas.toDataURL("image/png"));
     }
   }, [word, onImageReady]);
 

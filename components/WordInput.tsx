@@ -13,8 +13,7 @@ export interface WordInputHandle {
 }
 
 interface WordInputProps {
-  value: string;
-  /** Called with (maskedValue, rawValue) so parent can moderate raw and display masked */
+  /** Called with (maskedValue, rawValue) so parent can update preview; input keeps its own value */
   onChange: (maskedValue: string, rawValue: string) => void;
   onClear?: () => void;
   disabled?: boolean;
@@ -24,17 +23,18 @@ const fontFamily = '"Arial Black", "Arial Bold", Arial, sans-serif';
 const BASE_FONT_SIZE_PX = 24;
 const MIN_FONT_SIZE_PX = 12;
 
-const WordInput = forwardRef<WordInputHandle, WordInputProps>(function WordInput({ value, onChange, onClear, disabled }, ref) {
+const WordInput = forwardRef<WordInputHandle, WordInputProps>(function WordInput({ onChange, onClear, disabled }, ref) {
   const inputRef = useRef<HTMLInputElement>(null);
   const measureRef = useRef<HTMLSpanElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const [localValue, setLocalValue] = useState("");
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
   const [previousPlaceholderIndex, setPreviousPlaceholderIndex] = useState<number | null>(null);
   const [isFocused, setIsFocused] = useState(false);
   const [fontSizePx, setFontSizePx] = useState(BASE_FONT_SIZE_PX);
 
   useEffect(() => {
-    if (value.trim() !== "") return;
+    if (localValue.trim() !== "") return;
     const id = setInterval(() => {
       setPlaceholderIndex((i) => {
         setPreviousPlaceholderIndex(i);
@@ -42,7 +42,7 @@ const WordInput = forwardRef<WordInputHandle, WordInputProps>(function WordInput
       });
     }, ROTATION_INTERVAL_MS);
     return () => clearInterval(id);
-  }, [value]);
+  }, [localValue]);
 
   useEffect(() => {
     if (previousPlaceholderIndex === null) return;
@@ -67,7 +67,7 @@ const WordInput = forwardRef<WordInputHandle, WordInputProps>(function WordInput
     const scale = containerWidth / textWidth;
     const newSize = Math.max(MIN_FONT_SIZE_PX, Math.floor(BASE_FONT_SIZE_PX * scale));
     setFontSizePx(newSize);
-  }, [value]);
+  }, [localValue]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -95,16 +95,19 @@ const WordInput = forwardRef<WordInputHandle, WordInputProps>(function WordInput
 
   useImperativeHandle(ref, () => ({
     clear: () => {
+      setLocalValue("");
       onClear?.();
       inputRef.current?.focus();
     },
     focus: () => inputRef.current?.focus(),
-  }));
+  }), [onClear]);
 
-  const showPlaceholder = value.trim() === "" && !isFocused;
-  const showClear = value.trim() !== "" && onClear;
+  const hasValue = localValue.trim().length > 0;
+  const showPlaceholder = !hasValue && !isFocused;
+  const showClear = hasValue && onClear;
 
   const handleClearClick = () => {
+    setLocalValue("");
     onClear?.();
     inputRef.current?.focus();
   };
@@ -123,7 +126,7 @@ const WordInput = forwardRef<WordInputHandle, WordInputProps>(function WordInput
         <span
           ref={measureRef}
           aria-hidden
-          className="pointer-events-none absolute left-0 top-0 whitespace-nowrap opacity-0"
+          className="pointer-events-none absolute left-0 top-0 z-0 whitespace-nowrap opacity-0"
           style={{
             fontFamily,
             fontSize: `${BASE_FONT_SIZE_PX}px`,
@@ -134,44 +137,44 @@ const WordInput = forwardRef<WordInputHandle, WordInputProps>(function WordInput
             paddingBottom: "2px",
           }}
         >
-          {value || "W"}
+          {localValue || "W"}
         </span>
-        {showPlaceholder && (
-          <>
+        {showPlaceholder ? (
+          <div className="pointer-events-none absolute left-0 top-0 z-0" aria-hidden>
             {previousPlaceholderIndex !== null && (
               <span
                 key={`out-${previousPlaceholderIndex}`}
-                className="placeholder-fade-out pointer-events-none absolute left-0 top-0 pt-2 pb-0.5 font-bold uppercase tracking-[-1px] text-gray-400"
+                className="placeholder-fade-out block pt-2 pb-0.5 font-bold uppercase tracking-[-1px] text-gray-400"
                 style={{ ...textStyle, color: "rgb(156 163 175)" }}
-                aria-hidden
               >
                 {ROTATING_PLACEHOLDERS[previousPlaceholderIndex]}
               </span>
             )}
             <span
               key={`in-${placeholderIndex}`}
-              className="placeholder-fade-in pointer-events-none absolute left-0 top-0 pt-2 pb-0.5 font-bold uppercase tracking-[-1px] text-gray-400"
+              className="placeholder-fade-in block pt-2 pb-0.5 font-bold uppercase tracking-[-1px] text-gray-400"
               style={{ ...textStyle, color: "rgb(156 163 175)" }}
-              aria-hidden
             >
               {ROTATING_PLACEHOLDERS[placeholderIndex]}
             </span>
-          </>
-        )}
+          </div>
+        ) : null}
         <input
           ref={inputRef}
           type="text"
-          value={value}
+          value={localValue}
           onChange={(e) => {
             const raw = e.target.value;
-            onChange(maskBadWords(raw), raw);
+            const masked = maskBadWords(raw);
+            setLocalValue(masked);
+            onChange(masked, raw);
           }}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           placeholder=" "
           maxLength={28}
           disabled={disabled}
-          className={`w-full border-0 border-b-2 border-gray-300 bg-transparent pt-2 pb-0.5 font-bold uppercase tracking-[-1px] text-[#0056AE] focus:border-b-[#0056AE] focus:outline-none disabled:opacity-50 ${showClear ? "pr-9" : "px-0"}`}
+          className={`relative z-10 w-full border-0 border-b-2 border-gray-300 bg-transparent pt-2 pb-0.5 font-bold uppercase tracking-[-1px] text-[#0056AE] focus:border-b-[#0056AE] focus:outline-none disabled:opacity-50 ${showClear ? "pr-9" : "px-0"}`}
           style={{ ...textStyle, color: "#0056AE" }}
           aria-label="Enter a word"
         />

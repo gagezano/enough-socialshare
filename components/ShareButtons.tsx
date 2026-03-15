@@ -24,14 +24,6 @@ function DownloadIcon({ className = iconClass }: { className?: string }) {
   );
 }
 
-function ShareIcon() {
-  return (
-    <svg className={iconClass} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-    </svg>
-  );
-}
-
 function XIcon() {
   return (
     <svg className={iconClass} viewBox="0 0 24 24" fill="currentColor">
@@ -80,13 +72,19 @@ function InstagramIcon() {
   );
 }
 
+function addPlatformParam(url: string, platform: string): string {
+  const sep = url.includes("?") ? "&" : "?";
+  return `${url}${sep}for=${encodeURIComponent(platform)}`;
+}
+
 export default function ShareButtons({ word, imageDataUrl, pageUrl }: ShareButtonsProps) {
   const shareText = `i have had enough of ${word} #ENOUGH2026`;
-  const shareUrl =
+  const baseShareUrl =
     pageUrl ||
     (typeof window !== "undefined"
       ? `${window.location.origin}/share/${encodeURIComponent(word)}`
       : "");
+  const shareUrl = baseShareUrl;
 
   const handleDownload = () => {
     if (!imageDataUrl) return;
@@ -96,20 +94,23 @@ export default function ShareButtons({ word, imageDataUrl, pageUrl }: ShareButto
     a.click();
   };
 
-  const handleWebShare = async () => {
-    if (!navigator.share || !imageDataUrl) return;
+  const handleInstagramDownload = async () => {
+    const slug = encodeURIComponent(word);
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const url = `${origin}/api/share-image/${slug}?size=instagram`;
     try {
-      const blob = await (await fetch(imageDataUrl)).blob();
-      const file = new File([blob], `enough-${word}.png`, { type: "image/png" });
-      await navigator.share({
-        title: `Enough - ${word}`,
-        text: shareText,
-        files: [file],
-      });
-    } catch (err) {
-      if ((err as Error).name !== "AbortError") {
-        handleDownload();
-      }
+      const res = await fetch(url);
+      if (!res.ok) return;
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `enough-${word.toLowerCase().replace(/\s+/g, "-")}-instagram.png`;
+      a.click();
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      // fallback: open share page in new tab
+      window.open(addPlatformParam(shareUrl, "instagram"), "_blank");
     }
   };
 
@@ -125,41 +126,32 @@ export default function ShareButtons({ word, imageDataUrl, pageUrl }: ShareButto
         Post to:
       </p>
       <div className="flex flex-wrap items-center justify-center gap-3">
-        {typeof navigator !== "undefined" && "share" in navigator && (
-          <button
-            onClick={handleWebShare}
-            disabled={!imageDataUrl}
-            className={linkClass}
-            title="Share"
-            aria-label="Share"
-          >
-            <ShareIcon />
-          </button>
-        )}
-
         <a
-          href={getFacebookShareUrl(shareUrl, shareText)}
+          href={getFacebookShareUrl(addPlatformParam(shareUrl, "facebook"), shareText)}
           target="_blank"
           rel="noopener noreferrer"
           className={linkClass}
-          title="Facebook"
+          title="Facebook (caption copied — paste into the post)"
           aria-label="Post to Facebook"
+          onClick={() => {
+            shareText && navigator.clipboard?.writeText(shareText).catch(() => {});
+          }}
         >
           <FacebookIcon />
         </a>
 
         <button
-          onClick={handleDownload}
-          disabled={!imageDataUrl}
+          type="button"
+          onClick={handleInstagramDownload}
           className={linkClass}
-          title="Instagram (download to upload)"
+          title="Download image for Instagram (1080×1350), then post in the app"
           aria-label="Download for Instagram"
         >
           <InstagramIcon />
         </button>
 
         <a
-          href={getThreadsShareUrl(shareText, shareUrl)}
+          href={getThreadsShareUrl(shareText, addPlatformParam(shareUrl, "threads"))}
           target="_blank"
           rel="noopener noreferrer"
           className={linkClass}
@@ -170,7 +162,7 @@ export default function ShareButtons({ word, imageDataUrl, pageUrl }: ShareButto
         </a>
 
         <a
-          href={getTwitterShareUrl(shareText, shareUrl)}
+          href={getTwitterShareUrl(shareText, addPlatformParam(shareUrl, "twitter"))}
           target="_blank"
           rel="noopener noreferrer"
           className={linkClass}
@@ -181,7 +173,7 @@ export default function ShareButtons({ word, imageDataUrl, pageUrl }: ShareButto
         </a>
 
         <a
-          href={getBlueskyShareUrl(shareText, shareUrl)}
+          href={getBlueskyShareUrl(shareText, addPlatformParam(shareUrl, "bluesky"))}
           target="_blank"
           rel="noopener noreferrer"
           className={linkClass}
@@ -192,7 +184,7 @@ export default function ShareButtons({ word, imageDataUrl, pageUrl }: ShareButto
         </a>
 
         <a
-          href={getLinkedInShareUrl(shareUrl)}
+          href={getLinkedInShareUrl(addPlatformParam(shareUrl, "linkedin"))}
           target="_blank"
           rel="noopener noreferrer"
           className={linkClass}

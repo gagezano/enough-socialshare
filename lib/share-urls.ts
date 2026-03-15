@@ -1,13 +1,10 @@
-const FACEBOOK_APP_ID = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || "";
-
-export function getFacebookShareUrl(pageUrl: string, shareText?: string): string {
-  const params = new URLSearchParams({
-    app_id: FACEBOOK_APP_ID || "example",
-    display: "popup",
-    href: pageUrl,
-    ...(shareText && { quote: shareText }),
-  });
-  return `https://www.facebook.com/dialog/share?${params}`;
+/**
+ * Facebook share: use classic sharer.php (no App ID required).
+ * For quote/custom text you’d need the Share Dialog + App ID.
+ */
+export function getFacebookShareUrl(pageUrl: string, _shareText?: string): string {
+  const u = encodeURIComponent(pageUrl);
+  return `https://www.facebook.com/sharer/sharer.php?u=${u}`;
 }
 
 export function getTwitterShareUrl(text: string, url?: string): string {
